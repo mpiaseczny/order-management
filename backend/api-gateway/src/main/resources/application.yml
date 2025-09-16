@@ -1,0 +1,50 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  
+  cloud:
+    gateway:
+      server:
+        webflux:
+          routes:
+            - id: auth_service
+              uri: lb://auth-service
+              predicates:
+                - Path=/api/auth/**
+            - id: order_service
+              uri: lb://order-service
+              predicates:
+                - Path=/api/orders/**
+              filters:
+                - name: JwtAuthenticationGatewayFilter
+            - id: notification_service
+              uri: lb://notification-service
+              predicates:
+                - Path=/api/notifications/**
+              filters:
+                - name: JwtAuthenticationGatewayFilter
+      httpclient:
+        use-global-resolver: true
+
+    consul:
+      host: localhost
+      port: 8500
+      discovery:
+        service-name: ${spring.application.name}
+        health-check-path: /actuator/health
+        health-check-interval: 10s
+
+jwt:
+  secret: myVerySecretKeyForJWTTokenGeneration123456789012345678901234567890123456789012345678901234567890
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
